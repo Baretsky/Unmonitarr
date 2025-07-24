@@ -1,0 +1,26 @@
+        .navbar-brand {
+            font-weight: bold;
+            color: #0d6efd !important;
+        }
+        .status-healthy {
+            color: #198754;
+        }
+        .status-unhealthy {
+            color: #dc3545;
+        }
+        .card-stat {
+            border-left: 4px solid #0d6efd;
+        }
+        .log-entry {
+            border-left: 3px solid #dee2e6;
+            padding-left: 15px;
+        }
+        .log-success {
+            border-left-color: #198754;
+        }
+        .log-error {
+            border-left-color: #dc3545;
+        }
+        .log-warning {
+            border-left-color: #ffc107;
+        }

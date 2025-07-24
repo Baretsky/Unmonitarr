@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Unmonitarr{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 mb-0">
+                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+            </h1>
+            <button type="button" class="btn btn-outline-primary btn-sm" onclick="manualRefresh()" id="refresh-btn">
+                <i class="fas fa-sync-alt me-1"></i>Refresh
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Health Status -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-heartbeat me-2"></i>System Status
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row" id="health-status">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-center">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics -->
+<div class="row mb-4">
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card card-stat h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-subtitle text-muted">Total Media</h6>
+                        <h3 class="card-title" id="total-media">-</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-film fa-2x text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card card-stat h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-subtitle text-muted">Watched Items</h6>
+                        <h3 class="card-title" id="watched-items">-</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-eye fa-2x text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card card-stat h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-subtitle text-muted">Sync Actions</h6>
+                        <h3 class="card-title" id="sync-actions">-</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-sync-alt fa-2x text-info"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card card-stat h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-subtitle text-muted">Success Rate</h6>
+                        <h3 class="card-title" id="success-rate">-</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-chart-line fa-2x text-warning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Sync Logs -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-history me-2"></i>Recent Sync Activity
+                </h5>
+                <a href="/logs" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body">
+                <div id="recent-logs">
+                    <div class="d-flex justify-content-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Sync -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-rocket me-2"></i>Initial Sync
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h6 class="mb-2">Sync All Jellyfin Media</h6>
+                        <p class="text-muted mb-0">
+                            Fetch all watched/unwatched status from Jellyfin and sync with Sonarr/Radarr monitoring.
+                            This is useful for initial setup or full resynchronization.
+                        </p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-warning btn-lg" onclick="bulkSync('all')" id="bulk-sync-all-btn">
+                                <i class="fas fa-download me-2"></i>Start Full Sync
+                            </button>
+                            <button type="button" class="btn btn-info btn-sm" onclick="bulkSync('series')" id="bulk-sync-series-btn">
+                                <i class="fas fa-tv me-2"></i>Sync Series
+                            </button>
+                            <button type="button" class="btn btn-info btn-sm" onclick="bulkSync('movies')" id="bulk-sync-movies-btn">
+                                <i class="fas fa-film me-2"></i>Sync Movies
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <div id="bulk-sync-progress" class="d-none">
+                        <div class="alert alert-info mb-0">
+                            <i class="fas fa-spinner fa-spin me-2"></i>
+                            <strong>Bulk sync in progress...</strong> This may take several minutes depending on your library size.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', path='dashboard.js') }}"></script>
+{% endblock %}

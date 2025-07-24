@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}Logs - Unmonitarr{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h3 mb-4">
+            <i class="fas fa-list me-2"></i>Sync Logs
+        </h1>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-filter me-2"></i>Filters
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <label for="filter-status" class="form-label">Status</label>
+                        <select class="form-select" id="filter-status">
+                            <option value="">All Statuses</option>
+                            <option value="completed">Completed</option>
+                            <option value="failed">Failed</option>
+                            <option value="processing">Processing</option>
+                            <option value="pending">Pending</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="filter-service" class="form-label">Service</label>
+                        <select class="form-select" id="filter-service">
+                            <option value="">All Services</option>
+                            <option value="sonarr">Sonarr</option>
+                            <option value="radarr">Radarr</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="filter-action" class="form-label">Action</label>
+                        <select class="form-select" id="filter-action">
+                            <option value="">All Actions</option>
+                            <option value="monitor">Monitor</option>
+                            <option value="unmonitor">Unmonitor</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="filter-date" class="form-label">Date Range</label>
+                        <select class="form-select" id="filter-date">
+                            <option value="">All Time</option>
+                            <option value="today">Today</option>
+                            <option value="week">This Week</option>
+                            <option value="month">This Month</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <button class="btn btn-primary" onclick="applyFilters()">
+                            <i class="fas fa-search me-1"></i>Apply Filters
+                        </button>
+                        <button class="btn btn-outline-secondary ms-2" onclick="clearFilters()">
+                            <i class="fas fa-times me-1"></i>Clear
+                        </button>
+                        <button class="btn btn-outline-warning ms-2" onclick="bulkRetryFailed()">
+                            <i class="fas fa-redo me-1"></i>Retry Failed
+                        </button>
+                        <button class="btn btn-outline-info ms-2" onclick="exportLogs()">
+                            <i class="fas fa-download me-1"></i>Export
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Logs Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-table me-2"></i>Sync Activity
+                </h6>
+                <div>
+                    <button class="btn btn-sm btn-outline-primary" onclick="refreshLogs()">
+                        <i class="fas fa-sync-alt me-1"></i>Refresh
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Media Item</th>
+                                <th>Action</th>
+                                <th>Service</th>
+                                <th>Status</th>
+                                <th>Error</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logs-table-body">
+                            <tr>
+                                <td colspan="7" class="text-center">
+                                    <div class="spinner-border" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                <nav aria-label="Logs pagination" id="pagination-container" style="display: none;">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item">
+                            <a class="page-link" href="#" onclick="loadPage(currentPage - 1)">Previous</a>
+                        </li>
+                        <li class="page-item active">
+                            <span class="page-link" id="current-page">1</span>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="#" onclick="loadPage(currentPage + 1)">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+                
+                <!-- Empty State -->
+                <div id="empty-state" style="display: none;" class="text-center py-5">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No sync logs found</h5>
+                    <p class="text-muted">
+                        Sync logs will appear here when Jellyfin webhooks are processed
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Log Detail Modal -->
+<div class="modal fade" id="logDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Sync Log Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="log-detail-body">
+                <!-- Log details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-warning" id="retry-button" onclick="retryCurrentLog()" style="display: none;">
+                    <i class="fas fa-redo me-1"></i>Retry Sync
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', path='logs.js') }}"></script>
+{% endblock %}

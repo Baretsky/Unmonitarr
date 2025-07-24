@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+
+{% block title %}Configuration - Unmonitarr{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <h1 class="h3 mb-4">
+      <i class="fas fa-cog me-2"></i>Configuration
+    </h1>
+  </div>
+</div>
+
+<!-- Webhook Setup -->
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-webhook me-2"></i>Webhook Setup
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="alert alert-info" role="alert">
+          <i class="fas fa-info-circle me-2"></i>
+          <strong>Instructions:</strong>
+          <ol class="mb-0">
+            <li>In Jellyfin, go to <strong>Dashboard > Plugins > Webhooks</strong>. (If you don't have the Webhooks plugin, you can install it from the catalog. Restart after installing)</li>
+            <li>Click the <strong>+</strong> to add a new webhook.</li>
+            <li>Copy the <strong>Webhook URL</strong> below and paste it into the <strong>Webhook URL</strong> field in
+              Jellyfin.</li>
+            <li>Click <strong>Add Header</strong>. In the <strong>Key</strong> field, type <code>Authorization</code>.
+              Copy the <strong>Authorization Header Value</strong> below and paste it into the <strong>Value</strong>
+              field.</li>
+            <li>Enable the <strong>Send All Properties (ignores template)</strong> option.</li>
+            <li>Under <strong>Event Triggers</strong>, select <strong>UserDataSaved</strong>.</li>
+            <li>Click <strong>Save</strong>.</li>
+          </ol>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Webhook URL</label>
+          <div class="input-group">
+            <input type="text" class="form-control" id="webhook-url" readonly>
+            <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('webhook-url')">
+              <i class="fas fa-copy"></i>
+            </button>
+          </div>
+          <div class="form-text">Copy this URL into the Jellyfin Webhook plugin.</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Type of key</label>
+          <div class="input-group">
+            <input type="text" class="form-control" id="key-field" readonly>
+            <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('key-field')">
+              <i class="fas fa-copy"></i>
+            </button>
+          </div>
+          <div class="form-text">Copy this entire value into the <strong>Key</strong> field of the request header.
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Authorization token for the webhook</label>
+          <div class="input-group">
+            <input type="text" class="form-control" id="webhook-auth-header" readonly>
+            <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('webhook-auth-header')">
+              <i class="fas fa-copy"></i>
+            </button>
+          </div>
+          <div class="form-text">Copy this entire value into the <strong>Value</strong> field of the request header.
+          <button class="btn btn-outline-warning btn-sm" id="regenerate-token-btn">
+            <i class="fas fa-sync-alt me-1"></i>Regenerate Webhook Token
+          </button>
+          <div class="form-text">If you regenerate the token, you must update the <strong>Authorization Header
+              Value</strong> in Jellyfin.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Service Configuration -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">
+            <i class="fas fa-server me-2"></i>Service Configuration
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-info" role="alert">
+            <i class="fas fa-info-circle me-2"></i>
+            Service configuration is managed through environment variables.
+            Restart the container after making changes to the configuration.
+          </div>
+
+          <div class="row">
+            <!-- Jellyfin Config -->
+            <div class="col-md-4 mb-4">
+              <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                  <h6 class="mb-0">
+                    <i class="fas fa-play me-2"></i>Jellyfin
+                  </h6>
+                </div>
+                <div class="card-body">
+                  <div class="mb-3">
+                    <label class="form-label">URL</label>
+                    <input type="text" class="form-control" id="jellyfin-url" readonly>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">API Key</label>
+                    <div class="input-group">
+                      <input type="password" class="form-control" id="jellyfin-key" readonly>
+                      <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('jellyfin-key')">
+                        <i class="fas fa-eye"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="d-grid">
+                    <button class="btn btn-outline-primary btn-sm" onclick="testConnection('jellyfin', event)">
+                      <i class="fas fa-plug me-1"></i>Test Connection
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sonarr Config -->
+            <div class="col-md-4 mb-4">
+              <div class="card h-100">
+                <div class="card-header bg-success text-white">
+                  <h6 class="mb-0">
+                    <i class="fas fa-tv me-2"></i>Sonarr
+                  </h6>
+                </div>
+                <div class="card-body">
+                  <div class="mb-3">
+                    <label class="form-label">URL</label>
+                    <input type="text" class="form-control" id="sonarr-url" readonly>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">API Key</label>
+                    <div class="input-group">
+                      <input type="password" class="form-control" id="sonarr-key" readonly>
+                      <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('sonarr-key')">
+                        <i class="fas fa-eye"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="d-grid">
+                    <button class="btn btn-outline-success btn-sm" onclick="testConnection('sonarr', event)">
+                      <i class="fas fa-plug me-1"></i>Test Connection
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Radarr Config -->
+            <div class="col-md-4 mb-4">
+              <div class="card h-100">
+                <div class="card-header bg-warning text-dark">
+                  <h6 class="mb-0">
+                    <i class="fas fa-film me-2"></i>Radarr
+                  </h6>
+                </div>
+                <div class="card-body">
+                  <div class="mb-3">
+                    <label class="form-label">URL</label>
+                    <input type="text" class="form-control" id="radarr-url" readonly>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">API Key</label>
+                    <div class="input-group">
+                      <input type="password" class="form-control" id="radarr-key" readonly>
+                      <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('radarr-key')">
+                        <i class="fas fa-eye"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="d-grid">
+                    <button class="btn btn-outline-warning btn-sm" onclick="testConnection('radarr', event)">
+                      <i class="fas fa-plug me-1"></i>Test Connection
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Application Settings -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">
+            <i class="fas fa-sliders-h me-2"></i>Application Settings
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="auto-sync" class="form-label">Auto Sync Enabled</label>
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="auto-sync" disabled>
+                  <label class="form-check-label" for="auto-sync">
+                    Automatically sync when Jellyfin watched status changes
+                  </label>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label for="sync-delay" class="form-label">Sync Delay (seconds)</label>
+                <input type="number" class="form-control" id="sync-delay" readonly>
+                <div class="form-text">Delay before processing sync to prevent rapid-fire updates</div>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="log-level" class="form-label">Log Level</label>
+                <input type="text" class="form-control" id="log-level" readonly>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Database Info -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">
+            <i class="fas fa-database me-2"></i>Database Information
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">Database Type</label>
+                <input type="text" class="form-control" value="SQLite" readonly>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">Database Path</label>
+                <input type="text" class="form-control" id="db-path" readonly>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-12">
+              <button class="btn btn-outline-info btn-sm" onclick="showDatabaseStats()">
+                <i class="fas fa-chart-bar me-1"></i>Show Database Statistics
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endblock %}
+
+  {% block scripts %}
+  <script src="{{ url_for('static', path='config.js') }}"></script>
+  {% endblock %}

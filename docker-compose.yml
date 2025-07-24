@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  unmonitarr:
+    image: baretsky24/unmonitarr:latest
+    container_name: unmonitarr
+    restart: unless-stopped
+    ports:
+      - "8088:8088"
+    volumes:
+      - path/to/data:/app/data
+      - path/to/config:/app/config
+    environment:
+      # -- General Settings --
+      - TZ=Europe/London
+      - LOG_LEVEL=INFO
+
+      # -- Jellyfin Configuration --
+      - JELLYFIN_URL=http://your-jellyfin-ip:8096
+      - JELLYFIN_API_KEY=your_jellyfin_api_key
+
+      # -- Sonarr Configuration --
+      - SONARR_URL=http://your-sonarr-ip:8989
+      - SONARR_API_KEY=your_sonarr_api_key
+
+      # -- Radarr Configuration --
+      - RADARR_URL=http://your-radarr-ip:7878
+      - RADARR_API_KEY=your_radarr_api_key
+
+      # -- Security & External APIs --
+      - ADMIN_USERNAME=admin
+      - ADMIN_PASSWORD=your_secure_admin_password
+      - OMDB_API_KEY=your_omdb_api_key # Optional: For better metadata matching
+      - USE_EXTERNAL_API=true # Set to false to disable external API lookups
+
+      # -- Sync & Performance --
+      - AUTO_SYNC_ENABLED=true
+      - SYNC_DELAY_SECONDS=5
+      - MAX_REQUESTS_PER_MINUTE=60
+      - RETRY_ATTEMPTS=3
+      - RETRY_DELAY=2
+
+      # -- Database (Do not change unless you know what you are doing) --
+      - DATABASE_URL=sqlite:///app/data/unmonitarr.db
