@@ -157,10 +157,22 @@ class SonarrClient:
         
         return ' '.join(cleaned_words) if cleaned_words else cleaned
     
-    async def get_episodes_for_series(self, series_id: int) -> List[Dict[str, Any]]:
-        """Get all episodes for a specific series."""
+    async def get_episodes_for_series(self, series_id: int, include_specials: bool = True) -> List[Dict[str, Any]]:
+        """Get all episodes for a specific series.
+        
+        Args:
+            series_id: The Sonarr series ID
+            include_specials: If False, excludes season 0 (special episodes)
+        """
         result = await self._make_request("GET", f"/episode", params={"seriesId": series_id})
-        return result if result else []
+        episodes = result if result else []
+        
+        if not include_specials:
+            # Filter out special episodes (season 0)
+            episodes = [ep for ep in episodes if ep.get("seasonNumber", 0) != 0]
+            logger.debug(f"Filtered out special episodes for series {series_id}, {len(episodes)} episodes remaining")
+        
+        return episodes
     
     async def get_episode_by_id(self, episode_id: int) -> Optional[Dict[str, Any]]:
         """Get specific episode by ID."""
@@ -168,7 +180,8 @@ class SonarrClient:
     
     async def search_episode(self, series_id: int, season_number: int, episode_number: int) -> Optional[Dict[str, Any]]:
         """Search for a specific episode by series, season, and episode number."""
-        episodes = await self.get_episodes_for_series(series_id)
+        # Always include specials for individual episode searches, let the caller decide what to do
+        episodes = await self.get_episodes_for_series(series_id, include_specials=True)
         
         for episode in episodes:
             if (episode.get("seasonNumber") == season_number and 
@@ -208,6 +221,12 @@ class SonarrClient:
                 logger.error(f"Episode {episode_id} not found")
                 return False
             
+            # Check if this is a special episode and if specials should be ignored
+            from .config import settings
+            if episode.get("seasonNumber") == 0 and settings.ignore_special_episodes:
+                logger.info(f"Ignoring special episode {episode_id} (season 0) due to configuration")
+                return True  # Return success to avoid error handling, but don't actually update
+            
             # Update monitoring status
             episode["monitored"] = monitored
             
@@ -226,7 +245,13 @@ class SonarrClient:
     async def update_season_monitoring(self, series_id: int, season_number: int, monitored: bool) -> bool:
         """Update monitoring status for all episodes in a season using bulk endpoint."""
         try:
-            episodes = await self.get_episodes_for_series(series_id)
+            # Check if this is a special season and if specials should be ignored
+            from .config import settings
+            if season_number == 0 and settings.ignore_special_episodes:
+                logger.info(f"Ignoring special episodes (season 0) for series {series_id} due to configuration")
+                return True  # Return success to avoid error handling, but don't actually update
+            
+            episodes = await self.get_episodes_for_series(series_id, include_specials=True)
             season_episodes = [ep for ep in episodes if ep.get("seasonNumber") == season_number]
             
             if not season_episodes:
@@ -412,7 +437,9 @@ class SonarrClient:
         if not series:
             return {}
         
-        episodes = await self.get_episodes_for_series(series_id)
+        from .config import settings
+        include_specials = not settings.ignore_special_episodes
+        episodes = await self.get_episodes_for_series(series_id, include_specials=include_specials)
         
         total_episodes = len(episodes)
         monitored_episodes = len([ep for ep in episodes if ep.get("monitored", False)])

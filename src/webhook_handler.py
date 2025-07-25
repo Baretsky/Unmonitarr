@@ -294,6 +294,12 @@ class WebhookHandler:
             jellyfin_id = webhook_data["jellyfin_id"]
             user_id = webhook_data["user_id"]
             
+            # Check if this is a special episode and should be ignored
+            season_number = webhook_data.get("season_number")
+            if season_number == 0 and settings.ignore_special_episodes:
+                logger.info(f"Ignoring special episode (season 0) for item {jellyfin_id} due to configuration")
+                return
+            
             # Check if watched status is directly available in webhook data
             if "is_watched" in webhook_data:
                 is_watched = webhook_data["is_watched"]
@@ -313,6 +319,11 @@ class WebhookHandler:
                 is_watched = media_info.get("is_watched", False)
                 item_name = media_info.get("title", "Unknown")
                 item_type = media_info.get("media_type", "Unknown")
+                
+                # Check if this is a special episode from Jellyfin data
+                if media_info.get("season_number") == 0 and settings.ignore_special_episodes:
+                    logger.info(f"Ignoring special episode (season 0) from Jellyfin data for {item_name}")
+                    return
             
             logger.info(f"Processing watched status change: {item_name} ({item_type}) -> watched={is_watched}")
             

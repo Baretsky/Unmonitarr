@@ -90,6 +90,9 @@ class Settings(BaseSettings):
     omdb_api_key: Optional[str] = None  # OMDb API key for IMDB metadata matching (free at omdbapi.com)
     use_external_api: bool = True  # Enable external API matching
     
+    # Special Episodes Configuration
+    ignore_special_episodes: bool = True  # Ignore season 0 (special episodes) when syncing with Sonarr
+    
     class Config:
         env_file = get_or_create_env_file()
         case_sensitive = False

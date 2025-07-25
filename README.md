@@ -65,6 +65,7 @@ docker run -d \
   -e MAX_REQUESTS_PER_MINUTE=60 \
   -e RETRY_ATTEMPTS=3 \
   -e RETRY_DELAY=2 \
+  -e IGNORE_SPECIAL_EPISODES=true \
   -e TZ=Europe/Paris \
   --restart unless-stopped \
   baretsky24/unmonitarr:latest
@@ -114,6 +115,9 @@ services:
       - RETRY_ATTEMPTS=3
       - RETRY_DELAY=2
 
+      # -- Special Episodes Configuration --
+      - IGNORE_SPECIAL_EPISODES=true
+
       # -- Database (Do not change unless you know what you are doing) --
       - DATABASE_URL=sqlite:///app/data/unmonitarr.db
 ```
@@ -141,6 +145,7 @@ services:
 | `RETRY_DELAY` | Delay in seconds between retry attempts. | `2` | No |
 | `TZ` | Timezone for the container (e.g., `Europe/Paris`, `America/New_York`). | `UTC` | No |
 | `LOG_LEVEL` | Logging level (e.g., `INFO`, `DEBUG`, `WARNING`, `ERROR`). | `INFO` | No |
+| `IGNORE_SPECIAL_EPISODES` | Ignore season 0 (special episodes) when syncing with Sonarr. | `true` | No |
 | `DATABASE_URL` | Database connection string. **Do not change unless you know what you are doing.** | `sqlite:///app/data/unmonitarr.db` | No |
 
 ### Webhook Setup
@@ -183,6 +188,45 @@ docker logs unmonitarr
 Monitor service health:
 ```bash
 curl http://localhost:8088/health
+```
+
+## Development
+
+### GitHub Actions Setup
+
+This project uses GitHub Actions to automatically build and push Docker images to Docker Hub. To set this up for your fork:
+
+1. **Fork the repository** to your GitHub account
+
+2. **Create a GitHub Environment** (recommended for better security):
+   - Go to your GitHub repository → Settings → Environments
+   - Create a new environment named `dockerhub`
+   - Add the following environment secrets:
+     - `DOCKERHUB_USERNAME`: Your Docker Hub username
+     - `DOCKERHUB_TOKEN`: Your Docker Hub access token (create one at https://hub.docker.com/settings/security)
+   
+   *Alternative: You can also add these as repository secrets under Settings → Secrets and variables → Actions, but using environments provides better isolation and control.*
+
+3. **Update the image name** in `.github/workflows/docker-build.yml`:
+   - Change `IMAGE_NAME: baretsky24/unmonitarr` to `IMAGE_NAME: yourusername/unmonitarr`
+   - Update the environment URL: `url: https://hub.docker.com/r/yourusername/unmonitarr`
+
+4. **Workflow triggers**:
+   - **Push to main/develop**: Builds and pushes with branch name as tag (only if code changes in `src/`, `static/`, `templates/`, `Dockerfile`, `requirements.txt`, or `docker-compose.yml`)
+   - **Create tag (v*)**: Builds and pushes with semantic versioning tags
+   - **Pull requests**: Builds only (no push to registry, same path filters apply)
+   - **Manual trigger**: Use workflow_dispatch for manual builds
+
+### Manual Build
+
+To build the Docker image locally:
+
+```bash
+# Build for current architecture
+docker build -t unmonitarr .
+
+# Build for multiple architectures (requires buildx)
+docker buildx build --platform linux/amd64,linux/arm64 -t unmonitarr .
 ```
 
 ## Contributing
